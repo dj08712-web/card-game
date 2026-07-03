@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>카드 뒤집기</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Noto+Sans+KR:wght@400;600;700&display=swap");
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-deep: #0f0a1e;
+      --bg-mid: #1a1033;
+      --neon-pink: #ff2d95;
+      --neon-cyan: #00f5ff;
+      --neon-yellow: #ffe566;
+      --neon-purple: #a855f7;
+      --panel-bg: rgba(20, 12, 40, 0.85);
+      --text: #f0e6ff;
+      --text-dim: #a89bc4;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Noto Sans KR", sans-serif;
+      color: var(--text);
+      padding: 20px 16px 40px;
+      background: var(--bg-deep);
+      background-image:
+        radial-gradient(ellipse at 20% 20%, rgba(168, 85, 247, 0.25) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(0, 245, 255, 0.15) 0%, transparent 50%),
+        linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-mid) 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 540px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .header h1 {
+      font-family: "Orbitron", sans-serif;
+      font-size: clamp(1.6rem, 5vw, 2.2rem);
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink), var(--neon-yellow));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 40px rgba(0, 245, 255, 0.3);
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      letter-spacing: 0.05em;
+    }
+
+    .panel {
+      background: var(--panel-bg);
+      border: 2px solid rgba(168, 85, 247, 0.4);
+      border-radius: 20px;
+      padding: 22px;
+      margin-bottom: 18px;
+      box-shadow:
+        0 0 30px rgba(168, 85, 247, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+    }
+
+    .panel-glow {
+      border-color: rgba(0, 245, 255, 0.35);
+      box-shadow: 0 0 40px rgba(0, 245, 255, 0.12);
+    }
+
+    .start-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .start-form label {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--neon-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    input[type="text"] {
+      padding: 14px 18px;
+      border: 2px solid rgba(0, 245, 255, 0.35);
+      border-radius: 12px;
+      font-size: 1rem;
+      background: rgba(0, 0, 0, 0.4);
+      color: var(--text);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 20px rgba(0, 245, 255, 0.25);
+    }
+
+    input[type="text"]::placeholder { color: var(--text-dim); }
+
+    .btn {
+      font-family: "Orbitron", sans-serif;
+      background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 24px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(255, 45, 149, 0.4);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 28px rgba(255, 45, 149, 0.55);
+    }
+
+    .btn:active { transform: translateY(0); }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #2d3748, #4a5568);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .hud-item {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(0, 245, 255, 0.25);
+      border-radius: 12px;
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .hud-item strong {
+      display: block;
+      font-family: "Orbitron", sans-serif;
+      font-size: 1.1rem;
+      color: var(--neon-yellow);
+      margin-top: 4px;
+    }
+
+    .board-wrap {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 16px;
+      padding: 14px;
+      border: 1px solid rgba(168, 85, 247, 0.2);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .card {
+      aspect-ratio: 1;
+      perspective: 900px;
+      cursor: pointer;
+      opacity: 0;
+      animation: dealIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .card.disabled { pointer-events: none; }
+
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.65s cubic-bezier(0.4, 0.0, 0.2, 1);
+      will-change: transform;
+    }
+
+    .card-inner.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card:not(.disabled):not(.matched):hover .card-inner:not(.flipped) {
+      transform: translateY(-6px) rotateY(8deg) scale(1.04);
+    }
+
+    .card:not(.disabled):not(.matched):hover .card-inner.flipped {
+      transform: rotateY(180deg) translateY(-4px) scale(1.03);
+    }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.6rem, 5vw, 2.2rem);
+      border: 2px solid transparent;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-front {
+      background: linear-gradient(145deg, #4c1d95, #7c3aed 50%, #a855f7);
+      border-color: rgba(0, 245, 255, 0.4);
+      color: var(--neon-cyan);
+      font-family: "Orbitron", sans-serif;
+      font-size: 1.8rem;
+      font-weight: 800;
+      text-shadow: 0 0 20px rgba(0, 245, 255, 0.6);
+    }
+
+    .card-front::before {
+      content: "✦";
+      position: absolute;
+      font-size: 0.6rem;
+      top: 8px;
+      left: 8px;
+      opacity: 0.6;
+    }
+
+    .card-front::after {
+      content: "✦";
+      position: absolute;
+      font-size: 0.6rem;
+      bottom: 8px;
+      right: 8px;
+      opacity: 0.6;
+      transform: rotate(180deg);
+    }
+
+    .card-back {
+      background: linear-gradient(160deg, #1e1b4b, #312e81);
+      transform: rotateY(180deg);
+      border-color: rgba(255, 229, 102, 0.35);
+    }
+
+    .card.matched .card-inner {
+      animation: matchPop 0.55s ease forwards;
+    }
+
+    .card.matched .card-back {
+      background: linear-gradient(160deg, #064e3b, #047857);
+      border-color: var(--neon-yellow);
+      box-shadow: 0 0 24px rgba(255, 229, 102, 0.45);
+    }
+
+    .card.mismatch .card-inner {
+      animation: shake 0.55s ease;
+    }
+
+    .message {
+      text-align: center;
+      min-height: 28px;
+      font-weight: 700;
+      margin-top: 16px;
+      font-size: 0.95rem;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 12px rgba(0, 245, 255, 0.4);
+    }
+
+    .message.win {
+      color: var(--neon-yellow);
+      animation: pulse 1.2s ease infinite;
+    }
+
+    .hidden { display: none !important; }
+
+    .ranking .rank-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .ranking h2 {
+      font-family: "Orbitron", sans-serif;
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      color: var(--neon-yellow);
+    }
+
+    .ranking .trophy { font-size: 1.4rem; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    th, td {
+      padding: 10px 8px;
+      text-align: center;
+      border-bottom: 1px solid rgba(168, 85, 247, 0.15);
+    }
+
+    th {
+      background: rgba(0, 0, 0, 0.3);
+      color: var(--neon-cyan);
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+
+    tr.rank-1 td { color: #ffd700; font-weight: 700; }
+    tr.rank-2 td { color: #c0c0c0; font-weight: 600; }
+    tr.rank-3 td { color: #cd7f32; font-weight: 600; }
+
+    .rank-empty {
+      text-align: center;
+      color: var(--text-dim);
+      padding: 16px;
+    }
+
+    .rank-medal {
+      font-size: 1.1rem;
+    }
+
+    @keyframes dealIn {
+      from {
+        opacity: 0;
+        transform: scale(0.2) rotateY(-90deg);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) rotateY(0);
+      }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: rotateY(180deg) translateX(0); }
+      20% { transform: rotateY(180deg) translateX(-8px); }
+      40% { transform: rotateY(180deg) translateX(8px); }
+      60% { transform: rotateY(180deg) translateX(-6px); }
+      80% { transform: rotateY(180deg) translateX(6px); }
+    }
+
+    .card.mismatch:not(.matched) .card-inner:not(.flipped) {
+      animation: shakeUnflipped 0.55s ease;
+    }
+
+    @keyframes shakeUnflipped {
+      0%, 100% { transform: rotateY(0) translateX(0); }
+      20% { transform: rotateY(0) translateX(-8px); }
+      40% { transform: rotateY(0) translateX(8px); }
+      60% { transform: rotateY(0) translateX(-6px); }
+      80% { transform: rotateY(0) translateX(6px); }
+    }
+
+    @keyframes matchPop {
+      0% { transform: rotateY(180deg) scale(1); }
+      40% { transform: rotateY(180deg) scale(1.12); }
+      100% { transform: rotateY(180deg) scale(1); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.75; }
+    }
+
+    @media (max-width: 400px) {
+      .hud { grid-template-columns: 1fr; }
+      .board { gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>MEMORY MATCH</h1>
+      <p class="subtitle">같은 카드 2장을 찾아라 · Supabase 랭킹</p>
+    </header>
+
+    <div id="startPanel" class="panel panel-glow">
+      <div class="start-form">
+        <label for="nickname">PLAYER NAME</label>
+        <input id="nickname" type="text" maxlength="20" placeholder="닉네임을 입력하세요" />
+        <button id="startBtn" type="button" class="btn">▶ GAME START</button>
+      </div>
+    </div>
+
+    <div id="gamePanel" class="panel hidden">
+      <div class="hud">
+        <div class="hud-item">PLAYER<strong id="playerLabel">-</strong></div>
+        <div class="hud-item">MOVES<strong id="moves">0</strong></div>
+        <div class="hud-item">TIME<strong id="timer">0</strong></div>
+      </div>
+      <div class="board-wrap">
+        <div id="board" class="board"></div>
+      </div>
+      <p id="gameMessage" class="message"></p>
+      <button id="restartBtn" type="button" class="btn btn-secondary hidden" style="margin-top:14px;width:100%">↻ PLAY AGAIN</button>
+    </div>
+
+    <div class="panel ranking">
+      <div class="rank-header">
+        <span class="trophy">🏆</span>
+        <h2>LEADERBOARD TOP 10</h2>
+      </div>
+      <div id="rankingWrap">
+        <p class="rank-empty">불러오는 중...</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://grduuxyabkjweqlgszib.supabase.co";
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdyZHV1eHlhYmtqd2VxbGdzemliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODEyNTYsImV4cCI6MjA5ODY1NzI1Nn0.2WDC6RyD7w6db4RvImD__GYAk-jl07-ePyiX37oajUI";
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const PAIRS = ["🍎", "🍊", "🍋", "🍇", "🍓", "🍒", "🍑", "🥝"];
+    const PAIR_COUNT = PAIRS.length;
+    const MEDALS = ["🥇", "🥈", "🥉"];
+
+    const startPanel = document.getElementById("startPanel");
+    const gamePanel = document.getElementById("gamePanel");
+    const nicknameInput = document.getElementById("nickname");
+    const startBtn = document.getElementById("startBtn");
+    const boardEl = document.getElementById("board");
+    const movesEl = document.getElementById("moves");
+    const timerEl = document.getElementById("timer");
+    const playerLabel = document.getElementById("playerLabel");
+    const gameMessage = document.getElementById("gameMessage");
+    const restartBtn = document.getElementById("restartBtn");
+    const rankingWrap = document.getElementById("rankingWrap");
+
+    let nickname = "";
+    let cards = [];
+    let firstCard = null;
+    let secondCard = null;
+    let lockBoard = false;
+    let moves = 0;
+    let matchedCount = 0;
+    let seconds = 0;
+    let timerId = null;
+
+    function shuffle(array) {
+      const copy = [...array];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function calcScore(m, sec) {
+      return Math.max(0, 10000 - m * 100 - sec * 10);
+    }
+
+    function formatTime(iso) {
+      const d = new Date(iso);
+      return d.toLocaleString("ko-KR", {
+        month: "numeric",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
+    async function loadRanking() {
+      rankingWrap.innerHTML = '<p class="rank-empty">불러오는 중...</p>';
+      const { data, error } = await supabaseClient
+        .from("card_flip_scores")
+        .select("user_id, score, play_time")
+        .order("score", { ascending: false })
+        .limit(10);
+
+      if (error) {
+        rankingWrap.innerHTML = `<p class="rank-empty">랭킹 로드 실패: ${error.message}</p>`;
+        return;
+      }
+
+      if (!data.length) {
+        rankingWrap.innerHTML = '<p class="rank-empty">아직 기록이 없습니다.</p>';
+        return;
+      }
+
+      const rows = data
+        .map((row, i) => {
+          const rankClass = i < 3 ? `rank-${i + 1}` : "";
+          const medal = i < 3 ? `<span class="rank-medal">${MEDALS[i]}</span>` : i + 1;
+          return `<tr class="${rankClass}"><td>${medal}</td><td>${escapeHtml(row.user_id)}</td><td>${row.score.toLocaleString()}</td><td>${formatTime(row.play_time)}</td></tr>`;
+        })
+        .join("");
+
+      rankingWrap.innerHTML = `
+        <table>
+          <thead><tr><th>#</th><th>PLAYER</th><th>SCORE</th><th>TIME</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    async function saveScore(score) {
+      const { error } = await supabaseClient.from("card_flip_scores").insert({
+        user_id: nickname,
+        score,
+      });
+      return error;
+    }
+
+    function stopTimer() {
+      if (timerId !== null) {
+        clearInterval(timerId);
+        timerId = null;
+      }
+    }
+
+    function startTimer() {
+      stopTimer();
+      timerId = setInterval(() => {
+        seconds += 1;
+        timerEl.textContent = String(seconds);
+      }, 1000);
+    }
+
+    function createCardElement(value, index) {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.dataset.index = String(index);
+      card.style.animationDelay = `${index * 0.06}s`;
+      card.innerHTML = `
+        <div class="card-inner">
+          <div class="card-face card-front">?</div>
+          <div class="card-face card-back">${value}</div>
+        </div>`;
+      card.addEventListener("click", () => handleCardClick(card, index));
+      return card;
+    }
+
+    function resetGameState() {
+      firstCard = null;
+      secondCard = null;
+      lockBoard = false;
+      moves = 0;
+      matchedCount = 0;
+      seconds = 0;
+      movesEl.textContent = "0";
+      timerEl.textContent = "0";
+      gameMessage.textContent = "";
+      gameMessage.classList.remove("win");
+      restartBtn.classList.add("hidden");
+      stopTimer();
+    }
+
+    function buildBoard() {
+      boardEl.innerHTML = "";
+      const values = shuffle([...PAIRS, ...PAIRS]);
+      cards = values.map((value) => ({ value, matched: false }));
+      values.forEach((value, index) => {
+        boardEl.appendChild(createCardElement(value, index));
+      });
+    }
+
+    function flipCard(cardEl, flipped) {
+      cardEl.querySelector(".card-inner").classList.toggle("flipped", flipped);
+    }
+
+    function setBoardLocked(locked) {
+      boardEl.querySelectorAll(".card").forEach((el) => {
+        el.classList.toggle("disabled", locked);
+      });
+    }
+
+    function triggerMismatch(cardA, cardB) {
+      cardA.classList.add("mismatch");
+      cardB.classList.add("mismatch");
+      setTimeout(() => {
+        cardA.classList.remove("mismatch");
+        cardB.classList.remove("mismatch");
+      }, 560);
+    }
+
+    async function handleWin() {
+      stopTimer();
+      const score = calcScore(moves, seconds);
+      gameMessage.textContent = `🎉 CLEAR! ${score.toLocaleString()} PTS — SAVING...`;
+      gameMessage.classList.add("win");
+      restartBtn.classList.remove("hidden");
+
+      const error = await saveScore(score);
+      if (error) {
+        gameMessage.textContent = `🎉 CLEAR! ${score.toLocaleString()} PTS (SAVE FAILED)`;
+      } else {
+        gameMessage.textContent = `🎉 CLEAR! ${score.toLocaleString()} PTS SAVED!`;
+        await loadRanking();
+      }
+    }
+
+    function handleCardClick(cardEl, index) {
+      if (lockBoard || cards[index].matched) return;
+
+      const inner = cardEl.querySelector(".card-inner");
+      if (inner.classList.contains("flipped")) return;
+
+      if (timerId === null) startTimer();
+
+      flipCard(cardEl, true);
+
+      if (!firstCard) {
+        firstCard = { el: cardEl, index };
+        return;
+      }
+
+      if (firstCard.index === index) return;
+
+      secondCard = { el: cardEl, index };
+      moves += 1;
+      movesEl.textContent = String(moves);
+      lockBoard = true;
+      setBoardLocked(true);
+
+      if (cards[firstCard.index].value === cards[secondCard.index].value) {
+        cards[firstCard.index].matched = true;
+        cards[secondCard.index].matched = true;
+        firstCard.el.classList.add("matched");
+        secondCard.el.classList.add("matched");
+        matchedCount += 1;
+        firstCard = null;
+        secondCard = null;
+        lockBoard = false;
+        setBoardLocked(false);
+
+        if (matchedCount === PAIR_COUNT) {
+          handleWin();
+        }
+        return;
+      }
+
+      triggerMismatch(firstCard.el, secondCard.el);
+
+      setTimeout(() => {
+        flipCard(firstCard.el, false);
+        flipCard(secondCard.el, false);
+        firstCard = null;
+        secondCard = null;
+        lockBoard = false;
+        setBoardLocked(false);
+      }, 750);
+    }
+
+    function startGame() {
+      const name = nicknameInput.value.trim();
+      if (!name) {
+        alert("닉네임을 입력해주세요.");
+        nicknameInput.focus();
+        return;
+      }
+      nickname = name;
+      playerLabel.textContent = nickname;
+      startPanel.classList.add("hidden");
+      gamePanel.classList.remove("hidden");
+      resetGameState();
+      buildBoard();
+      startTimer();
+    }
+
+    startBtn.addEventListener("click", startGame);
+    nicknameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") startGame();
+    });
+    restartBtn.addEventListener("click", () => {
+      resetGameState();
+      buildBoard();
+      startTimer();
+    });
+
+    loadRanking();
+  </script>
+</body>
+</html>
