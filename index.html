@@ -439,12 +439,25 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
   <script>
-    const SUPABASE_URL = "https://grduuxyabkjweqlgszib.supabase.co";
-    const SUPABASE_ANON_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdyZHV1eHlhYmtqd2VxbGdzemliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODEyNTYsImV4cCI6MjA5ODY1NzI1Nn0.2WDC6RyD7w6db4RvImD__GYAk-jl07-ePyiX37oajUI";
+    const SUPABASE_URL = window.SUPABASE_URL;
+    const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
 
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === "YOUR_ANON_PUBLIC_KEY") {
+      document.addEventListener("DOMContentLoaded", () => {
+        const wrap = document.getElementById("rankingWrap");
+        if (wrap) {
+          wrap.innerHTML =
+            '<p class="rank-empty">supabase-config.js 가 없습니다.<br>supabase-config.example.js 를 복사해 키를 넣어 주세요.</p>';
+        }
+      });
+    }
+
+    const supabaseClient =
+      SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== "YOUR_ANON_PUBLIC_KEY"
+        ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        : null;
 
     const PAIRS = ["🍎", "🍊", "🍋", "🍇", "🍓", "🍒", "🍑", "🥝"];
     const PAIR_COUNT = PAIRS.length;
@@ -497,6 +510,11 @@
 
     async function loadRanking() {
       rankingWrap.innerHTML = '<p class="rank-empty">불러오는 중...</p>';
+      if (!supabaseClient) {
+        rankingWrap.innerHTML =
+          '<p class="rank-empty">supabase-config.js 가 없습니다.<br>supabase-config.example.js 를 복사해 키를 넣어 주세요.</p>';
+        return;
+      }
       const { data, error } = await supabaseClient
         .from("card_flip_scores")
         .select("user_id, score, play_time")
@@ -537,6 +555,9 @@
     }
 
     async function saveScore(score) {
+      if (!supabaseClient) {
+        return { message: "supabase-config.js 설정이 필요합니다." };
+      }
       const { error } = await supabaseClient.from("card_flip_scores").insert({
         user_id: nickname,
         score,
