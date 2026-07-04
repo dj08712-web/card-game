@@ -2,6 +2,8 @@
   "name": "card-game",
   "private": true,
   "scripts": {
-    "build": "node scripts/generate-supabase-config.js"
+    "build": "node scripts/generate-supabase-config.js",
+    "vercel-build": "node scripts/generate-supabase-config.js"
   }
 }
+
